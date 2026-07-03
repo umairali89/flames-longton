@@ -2,7 +2,8 @@
 # Docs: https://render.com/docs/blueprint-spec
 #
 # Before launching:
-# 1. Create a free Redis database at https://upstash.com and set REDIS_URL
+# 1. (Optional) Create free Redis at https://upstash.com and set REDIS_URL on flames-api
+#    Without it, carts use in-memory storage (fine for demos on a single instance).
 # 2. (Optional) Add Stripe test keys for card payments
 
 databases:
@@ -37,7 +38,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: REDIS_URL
-        sync: false
+        value: memory
       - key: CORS_ORIGINS
         fromService:
           type: web
