@@ -1,0 +1,73 @@
+# Render Blueprint — free-tier deployment for Flames Longton
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Before launching:
+# 1. Create a free Redis database at https://upstash.com and set REDIS_URL
+# 2. (Optional) Add Stripe test keys for card payments
+
+databases:
+  - name: flames-db
+    databaseName: flames_longton
+    user: flames
+    plan: free
+
+services:
+  - type: web
+    name: flames-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: >-
+      corepack enable &&
+      corepack prepare pnpm@9.15.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @flames/api... build
+    startCommand: pnpm --filter @flames/api start
+    preDeployCommand: >-
+      pnpm --filter @flames/database migrate:deploy &&
+      pnpm --filter @flames/database seed
+    healthCheckPath: /v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: flames-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: flames-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+  - type: web
+    name: flames-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: apps/web
+    buildCommand: >-
+      cd ../.. &&
+      corepack enable &&
+      corepack prepare pnpm@9.15.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @flames/web... build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+      - key: API_SERVICE_URL
+        fromService:
+          type: web
+          name: flames-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false

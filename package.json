@@ -1,0 +1,24 @@
+{
+  "name": "flames-longton",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "test:e2e": "pnpm --filter @flames/web test:e2e",
+    "db:migrate": "pnpm --filter @flames/database migrate",
+    "db:seed": "pnpm --filter @flames/database seed",
+    "db:studio": "pnpm --filter @flames/database studio",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

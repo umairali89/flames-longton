@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Flames Longton API
+  version: 1.0.0
+  description: Restaurant e-commerce REST API
+servers:
+  - url: http://localhost:4000/v1
+paths:
+  /health:
+    get:
+      summary: Health check
+  /auth/register:
+    post:
+      summary: Register customer
+  /auth/login:
+    post:
+      summary: Login
+  /auth/guest:
+    post:
+      summary: Create guest session
+  /categories:
+    get:
+      summary: List menu categories
+  /products:
+    get:
+      summary: List products (filters category, dietary, q)
+  /products/{slug}:
+    get:
+      summary: Get product by slug
+  /cart:
+    get:
+      summary: Get cart
+    post:
+      summary: Add item
+    patch:
+      summary: Update item quantity
+    delete:
+      summary: Clear cart
+  /checkout/quote:
+    post:
+      summary: Price quote with delivery fees
+  /checkout/orders:
+    post:
+      summary: Place order
+  /orders/{id}:
+    get:
+      summary: Get order
+  /admin/orders:
+    get:
+      summary: List orders (staff)
+  /admin/orders/{id}/status:
+    patch:
+      summary: Update order status
+  /admin/products:
+    get:
+      summary: List products (staff)
+  /admin/products/{id}/availability:
+    patch:
+      summary: Toggle sold out
+  /webhooks/stripe:
+    post:
+      summary: Stripe payment webhook

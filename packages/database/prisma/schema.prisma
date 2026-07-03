@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  admin
+  kitchen
+  driver
+}
+
+enum OrderType {
+  delivery
+  collection
+}
+
+enum OrderStatus {
+  received
+  preparing
+  ready
+  out_for_delivery
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  card
+  cash
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  phone               String?
+  passwordHash        String?
+  role                UserRole  @default(customer)
+  marketingEmailOptIn Boolean   @default(false)
+  marketingSmsOptIn   Boolean   @default(false)
+  loyaltyPoints       Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  addresses           Address[]
+  orders              Order[]
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  line1     String
+  line2     String?
+  city      String
+  postcode  String
+  lat       Float?
+  lng       Float?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model MenuCategory {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  displayOrder Int       @default(0)
+  imageUrl     String?
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Product {
+  id              String          @id @default(uuid())
+  categoryId      String
+  category        MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String          @unique
+  description     String?
+  pricePence      Int
+  imageUrl        String?
+  allergens       Json            @default("[]")
+  dietaryTags     Json            @default("[]")
+  calories        Int?
+  prepTimeMinutes Int             @default(15)
+  isAvailable     Boolean         @default(true)
+  sortOrder       Int             @default(0)
+  modifierGroups  ModifierGroup[]
+  orderItems      OrderItem[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ModifierGroup {
+  id         String            @id @default(uuid())
+  productId  String
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name       String
+  minSelect  Int               @default(0)
+  maxSelect  Int               @default(1)
+  required   Boolean           @default(false)
+  sortOrder  Int               @default(0)
+  modifiers  ProductModifier[]
+}
+
+model ProductModifier {
+  id         String        @id @default(uuid())
+  groupId    String
+  group      ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  pricePence Int           @default(0)
+  isDefault  Boolean       @default(false)
+  sortOrder  Int           @default(0)
+}
+
+model DeliveryZone {
+  id               String   @id @default(uuid())
+  name             String
+  postcodePrefixes Json
+  deliveryFeePence Int
+  minOrderPence    Int      @default(0)
+  estimatedMinutes Int      @default(35)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+model Order {
+  id                    String        @id @default(uuid())
+  orderNumber           String        @unique
+  userId                String?
+  user                  User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestEmail            String?
+  guestSessionId        String?
+  type                  OrderType
+  status                OrderStatus   @default(received)
+  subtotalPence         Int
+  deliveryFeePence      Int           @default(0)
+  serviceChargePence    Int           @default(0)
+  discountPence         Int           @default(0)
+  totalPence            Int
+  paymentMethod         PaymentMethod
+  paymentStatus         PaymentStatus @default(pending)
+  stripePaymentIntentId String?
+  deliveryAddress       Json?
+  scheduledFor          DateTime?
+  allergenAcknowledgedAt DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  items                 OrderItem[]
+}
+
+model OrderItem {
+  id            String  @id @default(uuid())
+  orderId       String
+  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String?
+  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name          String
+  quantity      Int
+  unitPricePence Int
+  modifiers     Json    @default("[]")
+  allergens     Json    @default("[]")
+}
+
+model PromoCode {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  discountType   String
+  discountValue  Int
+  minOrderPence  Int       @default(0)
+  expiryDate     DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+}
