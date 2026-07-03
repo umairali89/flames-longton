@@ -23,10 +23,10 @@ services:
       corepack prepare pnpm@9.15.0 --activate &&
       pnpm install --frozen-lockfile &&
       pnpm --filter @flames/api... build
-    startCommand: pnpm --filter @flames/api start
-    preDeployCommand: >-
+    startCommand: >-
       pnpm --filter @flames/database migrate:deploy &&
-      pnpm --filter @flames/database seed
+      pnpm --filter @flames/database seed &&
+      pnpm --filter @flames/api start
     healthCheckPath: /v1/health
     envVars:
       - key: NODE_VERSION
