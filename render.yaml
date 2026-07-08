@@ -1,16 +1,12 @@
-# Render Blueprint — free-tier deployment for Flames Longton
+# Render Blueprint (API-only) for Vercel + Supabase + Render setup
 # Docs: https://render.com/docs/blueprint-spec
 #
-# Before launching:
-# 1. (Optional) Create free Redis at https://upstash.com and set REDIS_URL on flames-api
-#    Without it, carts use in-memory storage (fine for demos on a single instance).
-# 2. (Optional) Add Stripe test keys for card payments
-
-databases:
-  - name: flames-db
-    databaseName: flames_longton
-    user: flames
-    plan: free
+# Required manual env vars on flames-api:
+# - DATABASE_URL (Supabase direct PostgreSQL URL, include ?sslmode=require)
+# - CORS_ORIGINS (comma-separated Vercel domains, e.g. https://flames-longton.vercel.app)
+# Optional:
+# - REDIS_URL (defaults to in-memory carts via "memory")
+# - STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET
 
 services:
   - type: web
@@ -32,43 +28,14 @@ services:
       - key: NODE_VERSION
         value: '22'
       - key: DATABASE_URL
-        fromDatabase:
-          name: flames-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: REDIS_URL
         value: memory
       - key: CORS_ORIGINS
-        fromService:
-          type: web
-          name: flames-web
-          envVarKey: RENDER_EXTERNAL_URL
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-
-  - type: web
-    name: flames-web
-    runtime: node
-    plan: free
-    region: frankfurt
-    rootDir: apps/web
-    buildCommand: >-
-      cd ../.. &&
-      corepack enable &&
-      corepack prepare pnpm@9.15.0 --activate &&
-      pnpm install --frozen-lockfile &&
-      pnpm --filter @flames/web... build
-    startCommand: pnpm start
-    envVars:
-      - key: NODE_VERSION
-        value: '22'
-      - key: API_SERVICE_URL
-        fromService:
-          type: web
-          name: flames-api
-          envVarKey: RENDER_EXTERNAL_URL
-      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false
